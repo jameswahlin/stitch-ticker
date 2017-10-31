@@ -41,4 +41,4 @@ while True:
 
   colors = [colorTicker, priceColor, priceColor]
 
-  scrolling_text.display_text(lines, colors)
+  scrolling_text.display_text(lines, colors) 
