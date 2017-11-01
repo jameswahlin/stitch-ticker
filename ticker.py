@@ -2,43 +2,79 @@ import requests
 import scrolling_text
 import time
 
-def getQuote():
-  url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd"
+def getTickerList():
+  url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/ConfigView/incomingWebhook/59f8b7ae058429a3914d6f15?secret=abcd"
   response = requests.get(url).json()
+  data = response["tickerList"]
 
-  data = response[0]["body"]
+  #print(data)
 
-  print(data)
+  tickerList = data.split(",")
+
+  return tickerList
+
+
+def getQuote(ticker):
+  #url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd&ticker=" + ticker
+  hasResponse = False
+  while (not hasResponse):
+    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd"
+    response = requests.get(url).json()
+
+    if not "body" in response:
+      #print(response)
+      continue
+
+    data = response["body"]
+    hasResponse = True
+
+  #print(data)
 
   dailyQuotes = data.splitlines()
 
   currentQuote = dailyQuotes[1].split(",")
+  previousQuote = dailyQuotes[2].split(",")
 
   date = currentQuote[0]
-  openPrice = currentQuote[1]
-  highPrice = currentQuote[2]
-  lowPrice = currentQuote[3]
-  closePrice = currentQuote[4]
-  volume = currentQuote[5]
+  openPrice = float(currentQuote[1])
+  highPrice = float(currentQuote[2])
+  lowPrice = float(currentQuote[3])
+  closePrice = float(currentQuote[4])
+  volume = int(currentQuote[5])
 
-  return (date, openPrice, closePrice, volume)
+  prevClosePrice = float(previousQuote[4])
+  percentChange = 100 * ((closePrice - prevClosePrice) / prevClosePrice)
+
+  return (date, openPrice, closePrice, volume, prevClosePrice, percentChange)
+
+
+colorTicker = (255, 255, 255)
+colorFlat = (255, 255, 255)
+colorUp = (0, 255, 0)
+colorDown = (255, 0, 0)
 
 while True:
-  date,openPrice,lastPrice,volume = getQuote()
+  tickerList = getTickerList()
 
-  lines = ["NASDAQ:MDB", lastPrice, "{:,}".format(int(volume))]
+  if len(tickerList) == 1 and tickerList[0] == "pause":
+    time.sleep(1)
+    continue
 
-  colorTicker = (255, 255, 255)
-  colorFlat = (255, 255, 255)
-  colorUp = (0, 255, 0)
-  colorDown = (255, 0, 0)
+  for ticker in tickerList:
+    date,openPrice,lastPrice,volume,prevClosePrice,percentChange = getQuote(ticker)
 
-  priceColor = colorFlat
-  if float(lastPrice) > float(openPrice):
-      priceColor = colorUp
-  elif float(lastPrice) < float(openPrice):
-      priceColor = colorDown
+    displayLastPrice = "{:.2f}".format(lastPrice)
+    displayVolume = "{:,}".format(volume)
+    displayPercentChange = "{0:.2f}".format(percentChange)
 
-  colors = [colorTicker, priceColor, priceColor]
+    lines = [ticker, displayLastPrice, "%chg " + displayPercentChange, "vol " + displayVolume]
 
-  scrolling_text.display_text(lines, colors) 
+    priceColor = colorFlat
+    if lastPrice > prevClosePrice:
+        priceColor = colorUp
+    elif lastPrice < prevClosePrice:
+        priceColor = colorDown
+
+    colors = [colorTicker, priceColor, priceColor, priceColor]
+
+    scrolling_text.display_text(lines, colors)

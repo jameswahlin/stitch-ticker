@@ -25,7 +25,7 @@ def display_text(lines, colors):
     # sudo apt install fonts-roboto
     #FONT = ("/usr/share/fonts/truetype/roboto/Roboto-Bold.ttf", 10)
 
-    unicornhathd.rotation(0)
+    unicornhathd.rotation(90)
     unicornhathd.brightness(1.0)
 
 
