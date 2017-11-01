@@ -1,3 +1,4 @@
+import json
 import requests
 import scrolling_text
 import time
@@ -15,20 +16,22 @@ def getTickerList():
 
 
 def getQuote(ticker):
-  #url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd&ticker=" + ticker
+
   hasResponse = False
   while (not hasResponse):
-    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd"
-    response = requests.get(url).json()
+    # url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd"
+    # response = requests.get(url).json()
+
+    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be?secret=abcd"
+    payload = '{"ticker": "' + ticker + '"}'
+    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"}).json()
 
     if not "body" in response:
-      #print(response)
+      print(response)
       continue
 
     data = response["body"]
     hasResponse = True
-
-  #print(data)
 
   dailyQuotes = data.splitlines()
 
