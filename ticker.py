@@ -24,13 +24,13 @@ def getQuote(ticker):
 
     url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be?secret=abcd"
     payload = '{"ticker": "' + ticker + '"}'
-    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"}).json()
+    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
 
-    if not "body" in response:
-      print(response)
+    if not response.status_code == 200:
+      #print(response.json())
       continue
 
-    data = response["body"]
+    data = response.json()["body"]
     hasResponse = True
 
   dailyQuotes = data.splitlines()
