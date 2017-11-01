@@ -6,7 +6,7 @@ import requests
 import scrolling_text
 
 def get_ticker_list():
-    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/ConfigView/incomingWebhook/59f8b7ae058429a3914d6f15?secret=abcd"
+    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/ConfigView/incomingWebhook/59f8b7ae058429a3914d6f15"
     response = requests.get(url).json()
     data = response["tickerList"]
 
@@ -18,7 +18,7 @@ def get_quote(ticker):
 
     has_response = False
     while not has_response:
-        url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be?secret=abcd"
+        url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be"
         payload = '{"ticker": "' + ticker + '"}'
         response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
 
