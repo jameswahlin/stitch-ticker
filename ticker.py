@@ -1,83 +1,85 @@
-import json
-import requests
-import scrolling_text
+#!/usr/bin/env python
+
 import time
 
-def getTickerList():
-  url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/ConfigView/incomingWebhook/59f8b7ae058429a3914d6f15?secret=abcd"
-  response = requests.get(url).json()
-  data = response["tickerList"]
+import requests
+import scrolling_text
 
-  #print(data)
+def get_ticker_list():
+    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/ConfigView/incomingWebhook/59f8b7ae058429a3914d6f15?secret=abcd"
+    response = requests.get(url).json()
+    data = response["tickerList"]
 
-  tickerList = data.split(",")
+    #print(data)
 
-  return tickerList
+    return data.split(",")
 
+def get_quote(ticker):
 
-def getQuote(ticker):
+    has_response = False
+    while not has_response:
+        url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be?secret=abcd"
+        payload = '{"ticker": "' + ticker + '"}'
+        response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
 
-  hasResponse = False
-  while (not hasResponse):
-    # url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuote/incomingWebhook/59f798534fdd1fc4e6c58d17?secret=abcd"
-    # response = requests.get(url).json()
+        if not response.status_code == 200:
+            #print(response.json())
+            continue
 
-    url = "https://stitch.mongodb.com/api/client/v1.0/app/mdb-ticker-hplox/svc/GetQuoteForTicker/incomingWebhook/59f9d66046224c60567145be?secret=abcd"
-    payload = '{"ticker": "' + ticker + '"}'
-    response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
+        has_response = True
+        data = response.json()["body"]
 
-    if not response.status_code == 200:
-      #print(response.json())
-      continue
+        if data.find("Error Message") >= 0:
+            raise ValueError("Invalid ticker: " + ticker)
 
-    data = response.json()["body"]
-    hasResponse = True
+    daily_quotes = data.splitlines()
 
-  dailyQuotes = data.splitlines()
+    current_quote = daily_quotes[1].split(",")
+    previous_quote = daily_quotes[2].split(",")
 
-  currentQuote = dailyQuotes[1].split(",")
-  previousQuote = dailyQuotes[2].split(",")
+    close_price = float(current_quote[4])
+    volume = int(current_quote[5])
 
-  date = currentQuote[0]
-  openPrice = float(currentQuote[1])
-  highPrice = float(currentQuote[2])
-  lowPrice = float(currentQuote[3])
-  closePrice = float(currentQuote[4])
-  volume = int(currentQuote[5])
+    prev_close_price = float(previous_quote[4])
+    percent_change = 100 * ((close_price - prev_close_price) / prev_close_price)
 
-  prevClosePrice = float(previousQuote[4])
-  percentChange = 100 * ((closePrice - prevClosePrice) / prevClosePrice)
+    return (close_price, volume, prev_close_price, percent_change)
 
-  return (date, openPrice, closePrice, volume, prevClosePrice, percentChange)
+def run():
+    color_ticker = (255, 255, 255)
+    color_flat = (255, 255, 255)
+    color_up = (0, 255, 0)
+    color_down = (255, 0, 0)
 
+    while True:
+        ticker_list = get_ticker_list()
 
-colorTicker = (255, 255, 255)
-colorFlat = (255, 255, 255)
-colorUp = (0, 255, 0)
-colorDown = (255, 0, 0)
+        if len(ticker_list) == 1 and ticker_list[0] == "pause":
+            time.sleep(1)
+            continue
+        try:
+            for ticker in ticker_list:
+                last_price, volume, prev_close_price, percent_change = get_quote(ticker)
 
-while True:
-  tickerList = getTickerList()
+                display_last_price = "{:.2f}".format(last_price)
+                display_volume = "{:,}".format(volume)
+                display_percent_change = "{0:.2f}".format(percent_change)
 
-  if len(tickerList) == 1 and tickerList[0] == "pause":
-    time.sleep(1)
-    continue
+                lines = [ticker, display_last_price, "%chg " + display_percent_change,
+                         "vol " + display_volume]
 
-  for ticker in tickerList:
-    date,openPrice,lastPrice,volume,prevClosePrice,percentChange = getQuote(ticker)
+                price_color = color_flat
+                if last_price > prev_close_price:
+                    price_color = color_up
+                elif last_price < prev_close_price:
+                    price_color = color_down
 
-    displayLastPrice = "{:.2f}".format(lastPrice)
-    displayVolume = "{:,}".format(volume)
-    displayPercentChange = "{0:.2f}".format(percentChange)
+                colors = [color_ticker, price_color, price_color, price_color]
 
-    lines = [ticker, displayLastPrice, "%chg " + displayPercentChange, "vol " + displayVolume]
+                scrolling_text.display_text(lines, colors)
+        except ValueError as valerr:
+            print(valerr)
+            time.sleep(1)
+            continue
 
-    priceColor = colorFlat
-    if lastPrice > prevClosePrice:
-        priceColor = colorUp
-    elif lastPrice < prevClosePrice:
-        priceColor = colorDown
-
-    colors = [colorTicker, priceColor, priceColor, priceColor]
-
-    scrolling_text.display_text(lines, colors)
+run()

@@ -3,12 +3,12 @@
 import colorsys
 import signal
 import time
-from sys import exit
+import sys
 
 try:
     from PIL import Image, ImageDraw, ImageFont
 except ImportError:
-    exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
+    sys.exit("This script requires the pillow module\nInstall with: sudo pip install pillow")
 
 import unicornhathd
 
@@ -44,11 +44,11 @@ def display_text(lines, colors):
     for line in lines:
         w, h = font.getsize(line)
         text_width += w + width
-        text_height = max(text_height,h)
+        text_height = max(text_height, h)
 
     text_width += width + text_x + 1
 
-    image = Image.new("RGB", (text_width,max(16, text_height)), (0,0,0))
+    image = Image.new("RGB", (text_width, max(16, text_height)), (0, 0, 0))
     draw = ImageDraw.Draw(image)
 
     offset_left = 0
@@ -71,8 +71,5 @@ def display_text(lines, colors):
     unicornhathd.off()
 
 # lines = ["NASDAQ:MDB", "32.11", "20999"]
-
 # colors = [(255, 255, 255), (0, 255, 0), (255, 255, 255)]
-
 # display_text(lines, colors)
-
