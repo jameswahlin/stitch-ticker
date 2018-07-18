@@ -8,7 +8,7 @@ def get_quote(ticker):
 
     has_response = False
     while not has_response:
-        url = "ADD URL HERE"
+        url = "WEBHOOK URL HERE"
         payload = '{"ticker": "' + ticker + '"}';
         response = requests.post(url, data=payload, headers={"Content-Type": "application/json"})
 
@@ -32,34 +32,36 @@ def run():
     color_flat = (255, 255, 255)
     color_up = (0, 255, 0)
     color_down = (255, 0, 0)
+    ticker_list = ["mdb", "amzn"];
 
     while True:
-        try:
-            last_price, volume, prev_close_price, percent_change = get_quote("mdb")
+        for ticker in ticker_list:
+            try:
+                last_price, volume, prev_close_price, percent_change = get_quote(ticker)
 
-            display_last_price = "{:.2f}".format(last_price)
-            display_volume = "{:,}".format(volume)
-            display_percent_change = "{0:.2f}".format(percent_change)
+                display_last_price = "{:.2f}".format(last_price)
+                display_volume = "{:,}".format(volume)
+                display_percent_change = "{0:.2f}".format(percent_change)
 
-            lines = ["mdb", display_last_price, "%chg " +  display_percent_change,
-                     "vol " + display_volume]
+                lines = [ticker, display_last_price, "%chg " +  display_percent_change,
+                         "vol " + display_volume]
 
-            price_color = color_flat
-            if last_price > prev_close_price:
-                price_color = color_up
-            elif last_price < prev_close_price:
-                price_color = color_down
+                price_color = color_flat
+                if last_price > prev_close_price:
+                    price_color = color_up
+                elif last_price < prev_close_price:
+                    price_color = color_down
 
-            colors = [color_ticker, price_color, price_color, price_color]
+                colors = [color_ticker, price_color, price_color, price_color]
 
-            scrolling_text.display_text(lines, colors)
-        except ValueError as valerr:
-            print(valerr)
-            time.sleep(1)
-            continue
-        except Exception as e:
-            print (e)
-            time.sleep(1)
-            continue
+                scrolling_text.display_text(lines, colors)
+            except ValueError as valerr:
+                print(valerr)
+                time.sleep(1)
+                continue
+            except Exception as e:
+                print (e)
+                time.sleep(1)
+                continue
 
 run()
